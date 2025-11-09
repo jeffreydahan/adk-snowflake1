@@ -1,0 +1,16 @@
+# Vertex AI Setting
+GOOGLE_GENAI_USE_VERTEXAI=1
+
+# Google Cloud High Level
+GOOGLE_CLOUD_PROJECT_ID=""
+GOOGLE_CLOUD_LOCATION="us-central1"
+
+# Snowflake - Application Integration
+CLOUD_SNOWFLAKE_APP_INT_REGION="us-central1"
+CLOUD_SNOWFLAKE_APP_INT_CONNECTION="cloud-snowflake"
+CLOUD_SNOWFLAKE_APP_INT_TOOL_NAME_PREFIX="cloud_snowflake_tool"
+CLOUD_SNOWFLAKE_APP_INT_TOOL_INSTRUCTIONS="This tool allows you to connect to Snowflake in order to perform query operations related to food trucks and menus."
+
+# Models used in Agents
+ROOT_AGENT_MODEL="gemini-2.5-flash"
+SNOWFLAKE_AGENT_MODEL="gemini-2.5-flash"
