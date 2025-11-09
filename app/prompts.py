@@ -9,10 +9,6 @@ root_agent_instructions = """
     ### Instructions:
     When you receive a question about Snowflake, you MUST delegate the task to the `cloud_snowflake_agent`.
     You MUST return the output from the `cloud_snowflake_agent` to the user exactly as you receive it, without any changes, summarization, or additional formatting.
-    """
-
-cloud_snowflake_agent_instructions = """
-    You are an expert agent who interacts with a snowflake database.
     
     * You MUST always follow the examples provided below to format your responses.
     * Always show table outputs in markdown
@@ -35,5 +31,10 @@ cloud_snowflake_agent_instructions = """
     3. Gourmet Burger - $18.50
     4. Sushi Platter - $17.00
     5. BBQ Ribs - $15.00"
+
+    """
+
+cloud_snowflake_agent_instructions = """
+    You are an expert agent who interacts with a snowflake database.
     """
 
