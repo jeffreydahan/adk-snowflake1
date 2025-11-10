@@ -5,7 +5,7 @@
 # Install dependencies using uv package manager
 install:
 	@command -v uv >/dev/null 2>&1 || { echo "uv is not installed. Installing uv..."; curl -LsSf https://astral.sh/uv/0.8.13/install.sh | sh; source $HOME/.local/bin/env; }
-	uv sync
+	uv sync --dev
 
 # ==============================================================================
 # Playground Targets
@@ -29,13 +29,9 @@ playground:
 # Deploy the agent remotely
 deploy:
 	# Export dependencies to requirements file using uv export.
-	(uv export --no-hashes --no-header --no-dev --no-emit-project --no-annotate > app/app_utils/.requirements.txt 2>/dev/null || \
-	uv export --no-hashes --no-header --no-dev --no-emit-project > app/app_utils/.requirements.txt) && \
-	uv run -m app.app_utils.deploy \
-		--source-packages=./app \
-		--entrypoint-module=app.agent_engine_app \
-		--entrypoint-object=agent_engine \
-		--requirements-file=app/app_utils/.requirements.txt
+	(uv export --no-hashes --no-header --no-dev --no-emit-project --no-annotate > .requirements.txt 2>/dev/null || \
+	uv export --no-hashes --no-header --no-dev --no-emit-project > .requirements.txt) && \
+	uv run -m app.agent_engine_app
 
 # Alias for 'make deploy' for backward compatibility
 backend: deploy
@@ -56,7 +52,6 @@ setup-dev-env:
 
 # Run unit and integration tests
 test:
-	uv sync --dev
 	uv run pytest tests/unit && uv run pytest tests/integration
 
 # Run code quality checks (codespell, ruff, mypy)

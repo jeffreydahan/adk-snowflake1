@@ -59,5 +59,3 @@ root_agent = Agent(
     tools=[AgentTool(agent=cloud_snowflake_agent)],
     generate_content_config=types.GenerateContentConfig(temperature=0.01),
 )
-
-app = App(root_agent=root_agent, name="app")
