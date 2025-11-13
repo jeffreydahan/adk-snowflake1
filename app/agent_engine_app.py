@@ -71,6 +71,27 @@ class AgentEngineApp(AdkApp):
         return operations
 
 
+def load_env_from_file(file_path: str) -> dict[str, str]:
+    """Loads environment variables from a .env file."""
+    env_vars = {}
+    if not os.path.exists(file_path):
+        return env_vars
+    with open(file_path) as f:
+        for line in f:
+            line = line.strip()
+            if line and not line.startswith("#") and "=" in line:
+                key, value = line.split("=", 1)
+                key = key.strip()
+                value = value.strip()
+                # Remove quotes if present
+                if value.startswith('"') and value.endswith('"'):
+                    value = value[1:-1]
+                elif value.startswith("'") and value.endswith("'"):
+                    value = value[1:-1]
+                env_vars[key] = value
+    return env_vars
+
+
 @click.command()
 @click.option(
     "--project",
@@ -81,11 +102,19 @@ class AgentEngineApp(AdkApp):
     "--location",
     default="us-central1",
     help="GCP region (defaults to us-central1)",
+    envvar="GOOGLE_CLOUD_LOCATION",
 )
 @click.option(
     "--agent-name",
     default="my-awesome-agent",
     help="Name for the agent engine",
+    envvar="AGENT_NAME",
+)
+@click.option(
+    "--description",
+    default="a helpful and awesome agent",
+    envvar="AGENT_DESCRIPTION",
+    help="Description for the agent engine",
 )
 @click.option(
     "--requirements-file",
@@ -122,6 +151,7 @@ def deploy_agent_engine_app(
     project: str | None,
     location: str,
     agent_name: str,
+    description: str,
     requirements_file: str,
     extra_packages: tuple[str, ...],
     set_env_vars: str | None,
@@ -133,8 +163,21 @@ def deploy_agent_engine_app(
 
     logging.basicConfig(level=logging.INFO)
 
+    # Load environment variables from .env file in the parent directory
+    dotenv_path = os.path.join(os.path.dirname(__file__), "..", ".env")
+    env_vars_from_file = load_env_from_file(dotenv_path)
+
     # Parse environment variables if provided
-    env_vars = parse_env_vars(set_env_vars)
+    env_vars_from_cli = parse_env_vars(set_env_vars)
+
+    # Merge environment variables, with CLI overriding file
+    env_vars = {**env_vars_from_file, **env_vars_from_cli}
+
+    # Exclude reserved environment variables
+    reserved_vars = ["GOOGLE_CLOUD_PROJECT", "GOOGLE_CLOUD_LOCATION"]
+    for var in reserved_vars:
+        if var in env_vars:
+            del env_vars[var]
 
     if not project:
         _, project = google.auth.default()
@@ -183,7 +226,7 @@ def deploy_agent_engine_app(
 
     config = AgentEngineConfig(
         display_name=agent_name,
-        description="A base ReAct agent built with Google's Agent Development Kit (ADK)",
+        description=description,
         extra_packages=extra_packages_list,
         env_vars=env_vars,
         service_account=service_account,

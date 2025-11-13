@@ -13,36 +13,57 @@
 # limitations under the License.
 
 import os
+import google.auth
 from google.genai import types
 from google.adk.tools import AgentTool
-
-
 from google.adk.agents import Agent
 from google.adk.apps.app import App
+from dotenv import load_dotenv
+from google.adk.tools.application_integration_tool.application_integration_toolset import ApplicationIntegrationToolset
 
-from .tools.tools_native import app_int_cloud_snowflake_connector
 from .prompts import root_agent_instructions, cloud_snowflake_agent_instructions
 
-import vertexai
-import os
+_, project_id = google.auth.default()
+os.environ.setdefault("GOOGLE_CLOUD_PROJECT", project_id)
 
-# Helper function to get environment variables
-def get_env_var(key):
-    value = os.getenv(key)
-    if value is None or not value.strip():
-        raise ValueError(f"Environment variable '{key}' not found or is empty.")
-    return value
+# Load environment variables from .env file
+load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), '..', '.env'))
 
 # Load required env variables
-root_agent_model = get_env_var("ROOT_AGENT_MODEL")
-cloud_snowflake_agent_model = get_env_var("SNOWFLAKE_AGENT_MODEL")
-project_id = get_env_var("GOOGLE_CLOUD_PROJECT_ID")
-region = get_env_var("GOOGLE_CLOUD_LOCATION")
+root_agent_model = os.getenv("ROOT_AGENT_MODEL")
+cloud_snowflake_agent_model = os.getenv("SNOWFLAKE_AGENT_MODEL")
+region = os.getenv("GOOGLE_CLOUD_LOCATION")
 
-# Initialize Vertex AI
-vertexai.init(project=project_id, location=region)
+# print loaded env variables for debugging
+print(f"Loaded Environment Variables:")
+print(f"GOOGLE_CLOUD_PROJECT: {project_id}")
+print(f"GOOGLE_CLOUD_LOCATION: {region}")
+print(f"ROOT_AGENT_MODEL: {root_agent_model}")
+print(f"SNOWFLAKE_AGENT_MODEL: {cloud_snowflake_agent_model}")
 
-# Define Cloud SQL Posgres Server Agent
+# Define Snowflake Agent
+cloud_snowflake_app_int_region = os.getenv("CLOUD_SNOWFLAKE_APP_INT_REGION")
+cloud_snowflake_app_int_connection = os.getenv("CLOUD_SNOWFLAKE_APP_INT_CONNECTION")
+cloud_snowflake_app_int_tool_name_prefix = os.getenv("CLOUD_SNOWFLAKE_APP_INT_TOOL_NAME_PREFIX") # Optional, can be None
+cloud_snowflake_app_int_tool_instructions = os.getenv("CLOUD_SNOWFLAKE_APP_INT_TOOL_INSTRUCTIONS") # Optional, can be None
+
+# print loaded env variables for debugging
+print(f"CLOUD_SNOWFLAKE_APP_INT_REGION: {cloud_snowflake_app_int_region}")
+print(f"CLOUD_SNOWFLAKE_APP_INT_CONNECTION: {cloud_snowflake_app_int_connection}")
+print(f"CLOUD_SNOWFLAKE_APP_INT_TOOL_NAME_PREFIX: {cloud_snowflake_app_int_tool_name_prefix}")
+print(f"CLOUD_SNOWFLAKE_APP_INT_TOOL_INSTRUCTIONS: {cloud_snowflake_app_int_tool_instructions}")
+
+# Build Integration Connector object - Cloud SQL SQL Server
+app_int_cloud_snowflake_connector = ApplicationIntegrationToolset(
+    project=project_id,
+    location=cloud_snowflake_app_int_region, 
+    connection=cloud_snowflake_app_int_connection, 
+    actions=["ExecuteCustomQuery"],
+    tool_name_prefix=cloud_snowflake_app_int_tool_name_prefix,
+    tool_instructions=cloud_snowflake_app_int_tool_instructions
+)
+
+# Define the Snowflake Agent with tools and instructions
 cloud_snowflake_agent = Agent(
     model=cloud_snowflake_agent_model,
     name="cloud_snowflake_agent",

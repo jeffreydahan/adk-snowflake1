@@ -1,0 +1,81 @@
+#!/bin/bash
+source .env
+
+# Get GCP Access Token
+ACCESS_TOKEN=$(gcloud auth print-access-token)
+
+# Use the following from the .env file, or a default if not set
+PROJECT_ID="${GOOGLE_CLOUD_PROJECT_ID}"
+COLLECTION_ID="default_collection"
+ENGINE_ID="${GEMINI_ENTERPRISE_ENGINE_ID}"
+ASSISTANT_ID="default_assistant"
+REASONING_ENGINE_ID="${AGENT_ENGINE_APP_RESOURCE_ID}"
+AGENT_NAME="${GEMINI_DISPLAY_NAME}"
+AGENT_DESCRIPTION="${GEMINI_DESCRIPTION}"
+TOOL_DESCRIPTION="${GEMINI_TOOL_DESCRIPTION}"
+AGENT_ICON_URI="${GEMINI_ICON_URI}"
+
+# Print the above variables returned from .env file
+echo "PROJECT_ID: ${PROJECT_ID}"
+echo "COLLECTION_ID: ${COLLECTION_ID}"
+echo "ENGINE_ID: ${ENGINE_ID}"
+echo "ASSISTANT_ID: ${ASSISTANT_ID}"
+echo "REASONING_ENGINE_ID: ${REASONING_ENGINE_ID}"
+echo "AGENT_NAME: ${AGENT_NAME}"
+echo "AGENT_DESCRIPTION: ${AGENT_DESCRIPTION}"
+echo "TOOL_DESCRIPTION: ${TOOL_DESCRIPTION}"
+echo "AGENT_ICON_URI: ${AGENT_ICON_URI}"
+
+
+# Get the Project Number from the Project ID
+PROJECT_NUMBER=$(gcloud projects describe "${PROJECT_ID}" --format='get(projectNumber)')
+echo "PROJECT_NUMBER: ${PROJECT_NUMBER}"
+
+# Build the service account principal using the Project Number service-[ProjectNumber]@gcp-sa-aiplatform-re.iam.gserviceaccount.com
+# SERVICE_ACCOUNT_PRINCIPAL="service-${PROJECT_NUMBER}@gcp-sa-aiplatform-re.iam.gserviceaccount.com"
+# Grand the role of Application Integration Invoker to the service account principal
+# gcloud projects add-iam-policy-binding "${PROJECT_ID}" \
+#     --member="serviceAccount:${SERVICE_ACCOUNT_PRINCIPAL}" \
+#     --role="roles/integrations.integrationInvoker"
+
+# Build API Endpoint - it must use the 'global' location hard coded
+API_ENDPOINT="https://discoveryengine.googleapis.com/v1alpha/projects/${PROJECT_ID}/locations/global/collections/${COLLECTION_ID}/engines/${ENGINE_ID}/assistants/${ASSISTANT_ID}/agents"
+
+# Build the JSON payload using a heredoc for better readability and safety
+read -r -d '' JSON_PAYLOAD <<EOF
+{
+    "displayName": "${AGENT_NAME}",
+    "description": "${AGENT_DESCRIPTION}",
+    "adkAgentDefinition": {
+        "toolSettings": {
+            "toolDescription": "${TOOL_DESCRIPTION}"
+        },
+        "provisionedReasoningEngine": {
+            "reasoningEngine": "${REASONING_ENGINE_ID}"
+        }
+    }
+}
+EOF
+
+# If AGENT_ICON_URI is set and not "NONE", add the icon object to the payload
+if [ -n "${AGENT_ICON_URI}" ] && [ "${AGENT_ICON_URI}" != "NONE" ]; then
+    # Use jq to safely add the icon object to the JSON
+    JSON_PAYLOAD=$(echo "${JSON_PAYLOAD}" | jq --arg uri "${AGENT_ICON_URI}" '. + {icon: {uri: $uri}}')
+fi
+
+echo "---"
+echo "Using the following JSON payload:"
+echo "${JSON_PAYLOAD}"
+echo "---"
+
+# Execute
+curl -X POST \
+    -H "Content-Type: application/json" \
+    -H "Authorization: Bearer ${ACCESS_TOKEN}" \
+    -H "X-Goog-User-Project: ${PROJECT_ID}" \
+    "${API_ENDPOINT}" \
+    -d "${JSON_PAYLOAD}"
+
+# Go to Agentspace and click Agents to view and test your agent.
+# If you want to delete the Agent, just click the 3 dots on the Agent
+# and select Delete.
