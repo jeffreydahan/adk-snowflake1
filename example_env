@@ -14,3 +14,12 @@ CLOUD_SNOWFLAKE_APP_INT_TOOL_INSTRUCTIONS="This tool allows you to connect to Sn
 # Models used in Agents
 ROOT_AGENT_MODEL="gemini-2.5-flash"
 SNOWFLAKE_AGENT_MODEL="gemini-2.5-flash"
+
+# Agent Engine Deployment
+# for Agent Engine Deployment
+GEMINI_ENTERPRISE_ENGINE_ID="" # this is the App ID from Gemini Enterprise
+GEMINI_DISPLAY_NAME="adk_snowflake"
+GEMINI_DESCRIPTION="This agent can help you interact with food truck and menu data stored in a Snowflake database."
+GEMINI_TOOL_DESCRIPTION="This agent has access to a Snowflake database containing information about food trucks and their menus. It can perform queries to retrieve update and manage this data as needed."
+AGENT_ENGINE_APP_RESOURCE_ID="" # the full resource ID of the deployed Agent Engine App from deployment_metadata.json
+AGENT_ICON_URI="" # optional icon URI for the agent
